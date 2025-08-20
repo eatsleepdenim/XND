@@ -1,565 +1,121 @@
-<img width="75px" height="75px" align="right" alt="Inquirer Logo" src="https://raw.githubusercontent.com/SBoudrias/Inquirer.js/main/assets/inquirer_readme.svg?sanitize=true" title="Inquirer.js"/>
+# chardet
 
-# Inquirer.js
+_Chardet_ is a character detection module written in pure JavaScript (TypeScript). Module uses occurrence analysis to determine the most probable encoding.
 
-[![npm](https://badge.fury.io/js/inquirer.svg)](https://www.npmjs.com/package/inquirer)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FSBoudrias%2FInquirer.js.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FSBoudrias%2FInquirer.js?ref=badge_shield)
+- Packed size is only **22 KB**
+- Works in all environments: Node / Browser / Native
+- Works on all platforms: Linux / Mac / Windows
+- No dependencies
+- No native code / bindings
+- 100% written in TypeScript
+- Extensive code coverage
 
-A collection of common interactive command line user interfaces.
+## Installation
 
-> [!IMPORTANT]
-> This is the legacy version of Inquirer.js. While it still receives maintenance, it is not actively developed. For the new Inquirer, see [@inquirer/prompts](https://www.npmjs.com/package/@inquirer/prompts).
-
-# Special Thanks
-
-<div align="center" markdown="1">
-
-[![Graphite](https://github.com/user-attachments/assets/53db40ca-2254-481a-a094-6597f8716e29)](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)<br>
-
-### [Graphite is the AI developer productivity platform helping teams on GitHub ship higher quality software, faster](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)
-
-</div>
-
-## Table of Contents
-
-1.  [Documentation](#documentation)
-    1.  [Installation](#installation)
-    2.  [Examples](#examples)
-    3.  [Methods](#methods)
-    4.  [Objects](#objects)
-    5.  [Question](#question)
-    6.  [Answers](#answers)
-    7.  [Separator](#separator)
-    8.  [Prompt Types](#prompt-types)
-2.  [User Interfaces and Layouts](#user-interfaces-and-layouts)
-    1.  [Reactive Interface](#reactive-interface)
-3.  [Support](#support)
-4.  [Known issues](#issues)
-5.  [News](#news)
-6.  [Contributing](#contributing)
-7.  [License](#license)
-8.  [Plugins](#plugins)
-
-## Goal and Philosophy
-
-**`Inquirer.js`** strives to be an easily embeddable and beautiful command line interface for [Node.js](https://nodejs.org/) (and perhaps the "CLI [Xanadu](https://en.wikipedia.org/wiki/Citizen_Kane)").
-
-**`Inquirer.js`** should ease the process of
-
-- providing _error feedback_
-- _asking questions_
-- _parsing_ input
-- _validating_ answers
-- managing _hierarchical prompts_
-
-> **Note:** **`Inquirer.js`** provides the user interface and the inquiry session flow. If you're searching for a full blown command line program utility, then check out [commander](https://github.com/visionmedia/commander.js), [vorpal](https://github.com/dthree/vorpal) or [args](https://github.com/leo/args).
-
-## [Documentation](#documentation)
-
-<a name="documentation"></a>
-
-### Installation
-
-<a name="installation"></a>
-
-<table>
-<tr>
-  <th>npm</th>
-  <th>yarn</th>
-</tr>
-<tr>
-<td>
-
-```sh
-npm install inquirer
+```
+npm i chardet
 ```
 
-</td>
-<td>
+## Usage
 
-```sh
-yarn add inquirer
-```
-
-</td>
-</tr>
-</table>
+To return the encoding with the highest confidence:
 
 ```javascript
-import inquirer from 'inquirer';
+import chardet from 'chardet';
 
-inquirer
-  .prompt([
-    /* Pass your questions in here */
-  ])
-  .then((answers) => {
-    // Use user feedback for... whatever!!
-  })
-  .catch((error) => {
-    if (error.isTtyError) {
-      // Prompt couldn't be rendered in the current environment
-    } else {
-      // Something else went wrong
-    }
-  });
+const encoding = chardet.detect(Buffer.from('hello there!'));
+// or
+const encoding = await chardet.detectFile('/path/to/file');
+// or
+const encoding = chardet.detectFileSync('/path/to/file');
 ```
 
-<a name="examples"></a>
-
-### Examples (Run it and see it)
-
-Check out the [`packages/inquirer/examples/`](https://github.com/SBoudrias/Inquirer.js/tree/main/packages/inquirer/examples) folder for code and interface examples.
-
-```shell
-yarn node packages/inquirer/examples/pizza.js
-yarn node packages/inquirer/examples/checkbox.js
-# etc...
-```
-
-### Methods
-
-<a name="methods"></a>
-
-> [!WARNING]
-> Those interfaces are not necessary for modern Javascript, while still maintained, they're depreciated. We highly encourage you to adopt the more ergonomic and modern API with [@inquirer/prompts](https://www.npmjs.com/package/@inquirer/prompts). Both `inquirer` and `@inquirer/prompts` are usable at the same time, so you can progressively migrate.
-
-#### `inquirer.prompt(questions, answers) -> promise`
-
-Launch the prompt interface (inquiry session)
-
-- **questions** (Array) containing [Question Object](#question) (using the [reactive interface](#reactive-interface), you can also pass a `Rx.Observable` instance)
-- **answers** (object) contains values of already answered questions. Inquirer will avoid asking answers already provided here. Defaults `{}`.
-- returns a **Promise**
-
-#### `inquirer.registerPrompt(name, prompt)`
-
-Register prompt plugins under `name`.
-
-- **name** (string) name of the this new prompt. (used for question `type`)
-- **prompt** (object) the prompt object itself (the plugin)
-
-#### `inquirer.createPromptModule() -> prompt function`
-
-Create a self contained inquirer module. If you don't want to affect other libraries that also rely on inquirer when you overwrite or add new prompt types.
-
-```js
-const prompt = inquirer.createPromptModule();
-
-prompt(questions).then(/* ... */);
-```
-
-### Objects
-
-<a name="objects"></a>
-
-#### Question
-
-<a name="questions"></a>
-A question object is a `hash` containing question related values:
-
-- **type**: (String) Type of the prompt. Defaults: `input` - Possible values: `input`, `number`, `confirm`, `list`, `rawlist`, `expand`, `checkbox`, `password`, `editor`
-- **name**: (String) The name to use when storing the answer in the answers hash. If the name contains periods, it will define a path in the answers hash.
-- **message**: (String|Function) The question to print. If defined as a function, the first parameter will be the current inquirer session answers. Defaults to the value of `name` (followed by a colon).
-- **default**: (String|Number|Boolean|Array|Function) Default value(s) to use if nothing is entered, or a function that returns the default value(s). If defined as a function, the first parameter will be the current inquirer session answers.
-- **choices**: (Array|Function) Choices array or a function returning a choices array. If defined as a function, the first parameter will be the current inquirer session answers.
-  Array values can be simple `numbers`, `strings`, or `objects` containing a `name` (to display in list), a `value` (to save in the answers hash), and a `short` (to display after selection) properties. The choices array can also contain [a `Separator`](#separator).
-- **validate**: (Function) Receive the user input and answers hash. Should return `true` if the value is valid, and an error message (`String`) otherwise. If `false` is returned, a default error message is provided.
-- **filter**: (Function) Receive the user input and answers hash. Returns the filtered value to be used inside the program. The value returned will be added to the _Answers_ hash.
-- **transformer**: (Function) Receive the user input, answers hash and option flags, and return a transformed value to display to the user. The transformation only impacts what is shown while editing. It does not modify the answers hash.
-- **when**: (Function, Boolean) Receive the current user answers hash and should return `true` or `false` depending on whether or not this question should be asked. The value can also be a simple boolean.
-- **pageSize**: (Number) Change the number of lines that will be rendered when using `list`, `rawList`, `expand` or `checkbox`.
-- **prefix**: (String) Change the default _prefix_ message.
-- **suffix**: (String) Change the default _suffix_ message.
-- **askAnswered**: (Boolean) Force to prompt the question if the answer already exists.
-- **loop**: (Boolean) Enable list looping. Defaults: `true`
-- **waitUserInput**: (Boolean) Flag to enable/disable wait for user input before opening system editor - Defaults: `true`
-
-`default`, `choices`(if defined as functions), `validate`, `filter` and `when` functions can be called asynchronously. Either return a promise or use `this.async()` to get a callback you'll call with the final value.
+To return the full list of possible encodings use `analyse` method.
 
 ```javascript
-{
-  /* Preferred way: with promise */
-  filter() {
-    return new Promise(/* etc... */);
-  },
-
-  /* Legacy way: with this.async */
-  validate: function (input) {
-    // Declare function as asynchronous, and save the done callback
-    const done = this.async();
-
-    // Do async stuff
-    setTimeout(function() {
-      if (typeof input !== 'number') {
-        // Pass the return value in the done callback
-        done('You need to provide a number');
-      } else {
-        // Pass the return value in the done callback
-        done(null, true);
-      }
-    }, 3000);
-  }
-}
+import chardet from 'chardet';
+chardet.analyse(Buffer.from('hello there!'));
 ```
 
-### Answers
+Returned value is an array of objects sorted by confidence value in descending order
 
-<a name="answers"></a>
-A key/value hash containing the client answers in each prompt.
-
-- **Key** The `name` property of the _question_ object
-- **Value** (Depends on the prompt)
-  - `confirm`: (Boolean)
-  - `input` : User input (filtered if `filter` is defined) (String)
-  - `number`: User input (filtered if `filter` is defined) (Number)
-  - `rawlist`, `list` : Selected choice value (or name if no value specified) (String)
-
-### Separator
-
-<a name="separator"></a>
-A separator can be added to any `choices` array:
-
-```
-// In the question object
-choices: [ "Choice A", new inquirer.Separator(), "choice B" ]
-
-// Which'll be displayed this way
-[?] What do you want to do?
- > Order a pizza
-   Make a reservation
-   --------
-   Ask opening hours
-   Talk to the receptionist
+```javascript
+[
+  { confidence: 90, name: 'UTF-8' },
+  { confidence: 20, name: 'windows-1252', lang: 'fr' },
+];
 ```
 
-The constructor takes a facultative `String` value that'll be use as the separator. If omitted, the separator will be `--------`.
+In browser, you can use [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instead of the `Buffer`:
 
-Separator instances have a property `type` equal to `separator`. This should allow tools façading Inquirer interface from detecting separator types in lists.
+```javascript
+import chardet from 'chardet';
+chardet.analyse(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]));
+```
 
-<a name="prompt"></a>
+## Working with large data sets
 
-### Prompt types
+Sometimes, when data set is huge and you want to optimize performance (with a trade off of less accuracy),
+you can sample only the first N bytes of the buffer:
 
----
+```javascript
+const encoding = await chardet.detectFile('/path/to/file', { sampleSize: 32 });
+```
 
-> **Note:**: _allowed options written inside square brackets (`[]`) are optional. Others are required._
+You can also specify where to begin reading from in the buffer:
 
-#### List - `{type: 'list'}`
-
-Take `type`, `name`, `message`, `choices`[, `default`, `filter`, `loop`] properties.
-(Note: `default` must be set to the `index` or `value` of one of the entries in `choices`)
-
-![List prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/list.svg)
-
----
-
-#### Raw List - `{type: 'rawlist'}`
-
-Take `type`, `name`, `message`, `choices`[, `default`, `filter`, `loop`] properties.
-(Note: `default` must be set to the `index` of one of the entries in `choices`)
-
-![Raw list prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/rawlist.svg)
-
----
-
-#### Expand - `{type: 'expand'}`
-
-Take `type`, `name`, `message`, `choices`[, `default`] properties.
-Note: `default` must be the `index` of the desired default selection of the array. If `default` key not provided, then `help` will be used as default choice
-
-Note that the `choices` object will take an extra parameter called `key` for the `expand` prompt. This parameter must be a single (lowercased) character. The `h` option is added by the prompt and shouldn't be defined by the user.
-
-See `examples/expand.js` for a running example.
-
-![Expand prompt closed](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/expand-y.svg)
-![Expand prompt expanded](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/expand-d.svg)
-
----
-
-#### Checkbox - `{type: 'checkbox'}`
-
-Take `type`, `name`, `message`, `choices`[, `filter`, `validate`, `default`, `loop`] properties. `default` is expected to be an Array of the checked choices value.
-
-Choices marked as `{checked: true}` will be checked by default.
-
-Choices whose property `disabled` is truthy will be unselectable. If `disabled` is a string, then the string will be outputted next to the disabled choice, otherwise it'll default to `"Disabled"`. The `disabled` property can also be a synchronous function receiving the current answers as argument and returning a boolean or a string.
-
-![Checkbox prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/checkbox.svg)
-
----
-
-#### Confirm - `{type: 'confirm'}`
-
-Take `type`, `name`, `message`, [`default`, `transformer`] properties. `default` is expected to be a boolean if used.
-
-![Confirm prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/confirm.svg)
-
----
-
-#### Input - `{type: 'input'}`
-
-Take `type`, `name`, `message`[, `default`, `filter`, `validate`, `transformer`] properties.
-
-![Input prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/input.svg)
-
----
-
-#### Input - `{type: 'number'}`
-
-Take `type`, `name`, `message`[, `default`, `filter`, `validate`, `transformer`] properties.
-
----
-
-#### Password - `{type: 'password'}`
-
-Take `type`, `name`, `message`, `mask`,[, `default`, `filter`, `validate`] properties.
-
-![Password prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/password.svg)
-
----
-
-Note that `mask` is required to hide the actual user input.
-
-#### Editor - `{type: 'editor'}`
-
-Take `type`, `name`, `message`[, `default`, `filter`, `validate`, `postfix`, `waitUserInput`] properties
-
-Launches an instance of the users preferred editor on a temporary file. Once the user exits their editor, the contents of the temporary file are read in as the result. The editor to use is determined by reading the $VISUAL or $EDITOR environment variables. If neither of those are present, notepad (on Windows) or vim (Linux or Mac) is used.
-
-The `postfix` property is useful if you want to provide an extension.
-
-<a name="layouts"></a>
-
-### Use in Non-Interactive Environments
-
-`prompt()` requires that it is run in an interactive environment. (I.e. [One where `process.stdin.isTTY` is `true`](https://nodejs.org/docs/latest-v12.x/api/process.html#process_a_note_on_process_i_o)). If `prompt()` is invoked outside of such an environment, then `prompt()` will return a rejected promise with an error. For convenience, the error will have a `isTtyError` property to programmatically indicate the cause.
-
-<a name="reactive"></a>
-
-## Reactive interface
-
-Internally, Inquirer uses the [JS reactive extension](https://github.com/ReactiveX/rxjs) to handle events and async flows.
-
-This mean you can take advantage of this feature to provide more advanced flows. For example, you can dynamically add questions to be asked:
-
-```js
-const prompts = new Rx.Subject();
-inquirer.prompt(prompts);
-
-// At some point in the future, push new questions
-prompts.next({
-  /* question... */
+```javascript
+const encoding = await chardet.detectFile('/path/to/file', {
+  sampleSize: 32,
+  offset: 128,
 });
-prompts.next({
-  /* question... */
-});
-
-// When you're done
-prompts.complete();
 ```
 
-And using the return value `process` property, you can access more fine grained callbacks:
+## Working with strings
 
-```js
-inquirer.prompt(prompts).ui.process.subscribe(onEachAnswer, onError, onComplete);
-```
+In both Node.js and browsers, all strings in memory are represented in UTF-16 encoding. This is a fundamental aspect of the JavaScript language specification. Therefore, you cannot use plain strings directly as input for `chardet.analyse()` or `chardet.detect()`. Instead, you need the original string data in the form of a Buffer or Uint8Array.
 
-## Support (OS Terminals)
+In other words, if you receive a piece of data over the network and want to detect its encoding, use the original data payload, not its string representation. By the time you convert data to a string, it will be in UTF-16 encoding.
 
-<a name="support"></a>
+Note on [TextEncoder](https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/TextEncoder): By default, it returns a UTF-8 encoded buffer, which means the buffer will not be in the original encoding of the string.
 
-You should expect mostly good support for the CLI below. This does not mean we won't
-look at issues found on other command line - feel free to report any!
+## Supported Encodings:
 
-- **Mac OS**:
-  - Terminal.app
-  - iTerm
-- **Windows ([Known issues](#issues))**:
-  - [Windows Terminal](https://github.com/microsoft/terminal)
-  - [ConEmu](https://conemu.github.io/)
-  - cmd.exe
-  - Powershell
-  - Cygwin
-- **Linux (Ubuntu, openSUSE, Arch Linux, etc)**:
-  - gnome-terminal (Terminal GNOME)
-  - konsole
+- UTF-8
+- UTF-16 LE
+- UTF-16 BE
+- UTF-32 LE
+- UTF-32 BE
+- ISO-2022-JP
+- ISO-2022-KR
+- ISO-2022-CN
+- Shift_JIS
+- Big5
+- EUC-JP
+- EUC-KR
+- GB18030
+- ISO-8859-1
+- ISO-8859-2
+- ISO-8859-5
+- ISO-8859-6
+- ISO-8859-7
+- ISO-8859-8
+- ISO-8859-9
+- windows-1250
+- windows-1251
+- windows-1252
+- windows-1253
+- windows-1254
+- windows-1255
+- windows-1256
+- KOI8-R
 
-## Known issues
+Currently only these encodings are supported.
 
-<a name="issues"></a>
+## TypeScript?
 
-- **nodemon** - Makes the arrow keys print gibrish on list prompts.
-  Workaround: Add `{ stdin : false }` in the configuration file or pass `--no-stdin` in the CLI.
-  Please refer to [this issue](https://github.com/SBoudrias/Inquirer.js/issues/844#issuecomment-736675867)
+Yes. Type definitions are included.
 
-- **grunt-exec** - Calling a node script that uses Inquirer from grunt-exec can cause the program to crash. To fix this, add to your grunt-exec config `stdio: 'inherit'`.
-  Please refer to [this issue](https://github.com/jharding/grunt-exec/issues/85)
+### References
 
-- **Windows network streams** - Running Inquirer together with network streams in Windows platform inside some terminals can result in process hang.
-  Workaround: run inside another terminal.
-  Please refer to [this issue](https://github.com/nodejs/node/issues/21771)
-
-## News on the march (Release notes)
-
-<a name="news"></a>
-
-Please refer to the [GitHub releases section for the changelog](https://github.com/SBoudrias/Inquirer.js/releases)
-
-## Contributing
-
-<a name="contributing"></a>
-
-**Unit test**
-Please add a unit test for every new feature or bug fix. `yarn test` to run the test suite.
-
-**Documentation**
-Add documentation for every API change. Feel free to send typo fixes and better docs!
-
-We're looking to offer good support for multiple prompts and environments. If you want to
-help, we'd like to keep a list of testers for each terminal/OS so we can contact you and
-get feedback before release. Let us know if you want to be added to the list (just tweet
-to [@vaxilart](https://twitter.com/Vaxilart)) or just add your name to [the wiki](https://github.com/SBoudrias/Inquirer.js/wiki/Testers)
-
-## License
-
-<a name="license"></a>
-
-Copyright (c) 2023 Simon Boudrias (twitter: [@vaxilart](https://twitter.com/Vaxilart))<br/>
-Licensed under the MIT license.
-
-## Plugins
-
-<a name="plugins"></a>
-
-You can build custom prompts, or use open sourced ones. See [`@inquirer/core` documentation for building custom prompts](https://github.com/SBoudrias/Inquirer.js/tree/main/packages/core).
-
-You can either call the custom prompts directly (preferred), or you can register them (depreciated):
-
-```js
-import customPrompt from '$$$/custom-prompt';
-
-// 1. Preferred solution with new plugins
-const answer = await customPrompt({ ...config });
-
-// 2. Depreciated interface (or for old plugins)
-inquirer.registerPrompt('custom', customPrompt);
-const answers = await inquirer.prompt([
-  {
-    type: 'custom',
-    ...config,
-  },
-]);
-```
-
-When using Typescript and `registerPrompt`, you'll also need to define your prompt signature. Since Typescript is static, we cannot infer available plugins from function calls.
-
-```ts
-import customPrompt from '$$$/custom-prompt';
-
-declare module 'inquirer' {
-  interface QuestionMap {
-    // 1. Easiest option
-    custom: Parameters<typeof customPrompt>[0];
-
-    // 2. Or manually define the prompt config
-    custom_alt: { message: string; option: number[] };
-  }
-}
-```
-
-### Prompts
-
-[**autocomplete**](https://github.com/mokkabonna/inquirer-autocomplete-prompt)<br>
-Presents a list of options as the user types, compatible with other packages such as fuzzy (for search)<br>
-<br>
-![autocomplete prompt](https://raw.githubusercontent.com/mokkabonna/inquirer-autocomplete-prompt/master/packages/inquirer-autocomplete-prompt/inquirer.gif)
-
-[**checkbox-plus**](https://github.com/faressoft/inquirer-checkbox-plus-prompt)<br>
-Checkbox list with autocomplete and other additions<br>
-<br>
-![checkbox-plus](https://github.com/faressoft/inquirer-checkbox-plus-prompt/raw/master/demo.gif)
-
-[**inquirer-date-prompt**](https://github.com/haversnail/inquirer-date-prompt)<br>
-Customizable date/time selector with localization support<br>
-<br>
-![Date Prompt](https://github.com/haversnail/inquirer-date-prompt/raw/master/examples/demo.gif)
-
-[**datetime**](https://github.com/DerekTBrown/inquirer-datepicker-prompt)<br>
-Customizable date/time selector using both number pad and arrow keys<br>
-<br>
-![Datetime Prompt](https://github.com/DerekTBrown/inquirer-datepicker-prompt/raw/master/example/datetime-prompt.png)
-
-[**inquirer-select-line**](https://github.com/adam-golab/inquirer-select-line)<br>
-Prompt for selecting index in array where add new element<br>
-<br>
-![inquirer-select-line gif](https://media.giphy.com/media/xUA7b1MxpngddUvdHW/giphy.gif)
-
-[**command**](https://github.com/sullof/inquirer-command-prompt)<br>
-Simple prompt with command history and dynamic autocomplete<br>
-
-[**inquirer-fuzzy-path**](https://github.com/adelsz/inquirer-fuzzy-path)<br>
-Prompt for fuzzy file/directory selection.<br>
-<br>
-![inquirer-fuzzy-path](https://raw.githubusercontent.com/adelsz/inquirer-fuzzy-path/master/recording.gif)
-
-[**inquirer-emoji**](https://github.com/tannerntannern/inquirer-emoji)<br>
-Prompt for inputting emojis.<br>
-<br>
-![inquirer-emoji](https://github.com/tannerntannern/inquirer-emoji/raw/master/demo.gif)
-
-[**inquirer-chalk-pipe**](https://github.com/LitoMore/inquirer-chalk-pipe)<br>
-Prompt for input chalk-pipe style strings<br>
-<br>
-![inquirer-chalk-pipe](https://github.com/LitoMore/inquirer-chalk-pipe/blob/main/screenshot.gif)
-
-[**inquirer-search-checkbox**](https://github.com/clinyong/inquirer-search-checkbox)<br>
-Searchable Inquirer checkbox<br>
-![inquirer-search-checkbox](https://github.com/clinyong/inquirer-search-checkbox/blob/master/screenshot.png)
-
-[**inquirer-search-list**](https://github.com/robin-rpr/inquirer-search-list)<br>
-Searchable Inquirer list<br>
-<br>
-![inquirer-search-list](https://github.com/robin-rpr/inquirer-search-list/blob/master/preview.gif)
-
-[**inquirer-prompt-suggest**](https://github.com/olistic/inquirer-prompt-suggest)<br>
-Inquirer prompt for your less creative users.<br>
-<br>
-![inquirer-prompt-suggest](https://user-images.githubusercontent.com/5600126/40391192-d4f3d6d0-5ded-11e8-932f-4b75b642c09e.gif)
-
-[**inquirer-s3**](https://github.com/HQarroum/inquirer-s3)<br>
-An S3 object selector for Inquirer.<br>
-<br>
-![inquirer-s3](https://github.com/HQarroum/inquirer-s3/raw/master/docs/inquirer-screenshot.png)
-
-[**inquirer-autosubmit-prompt**](https://github.com/yaodingyd/inquirer-autosubmit-prompt)<br>
-Auto submit based on your current input, saving one extra enter<br>
-
-[**inquirer-file-tree-selection-prompt**](https://github.com/anc95/inquirer-file-tree-selection)<br>
-Inquirer prompt for to select a file or directory in file tree<br>
-<br>
-![inquirer-file-tree-selection-prompt](https://github.com/anc95/inquirer-file-tree-selection/blob/master/example/screenshot.gif)
-
-[**inquirer-tree-prompt**](https://github.com/insightfuls/inquirer-tree-prompt)<br>
-Inquirer prompt to select from a tree<br>
-<br>
-![inquirer-tree-prompt](https://github.com/insightfuls/inquirer-tree-prompt/blob/main/example/screenshot.gif)
-
-[**inquirer-table-prompt**](https://github.com/eduardoboucas/inquirer-table-prompt)<br>
-A table-like prompt for Inquirer.<br>
-<br>
-![inquirer-table-prompt](https://raw.githubusercontent.com/eduardoboucas/inquirer-table-prompt/master/screen-capture.gif)
-
-[**inquirer-table-input**](https://github.com/edelciomolina/inquirer-table-input)<br>
-A table editing prompt for Inquirer.<br>
-<br>
-![inquirer-table-prompt](https://raw.githubusercontent.com/edelciomolina/inquirer-table-input/master/screen-capture.gif)
-
-[**inquirer-interrupted-prompt**](https://github.com/lnquy065/inquirer-interrupted-prompt)<br>
-Turning any existing inquirer and its plugin prompts into prompts that can be interrupted with a custom key.<br>
-<br>
-![inquirer-interrupted-prompt](https://raw.githubusercontent.com/lnquy065/inquirer-interrupted-prompt/master/example/demo-menu.gif)
-
-[**inquirer-press-to-continue**](https://github.com/leonzalion/inquirer-press-to-continue)<br>
-A "press any key to continue" prompt for Inquirer.js<br>
-<br>
-![inquirer-press-to-continue](https://raw.githubusercontent.com/leonzalion/inquirer-press-to-continue/main/assets/demo.gif)
+- ICU project http://site.icu-project.org/
