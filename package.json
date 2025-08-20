@@ -1,0 +1,35 @@
+{
+  "name": "xnd",
+  "version": "1.0.0",
+  "description": "A simple, secure, and extensible package manager for XND packages.",
+  "main": "index.mjs",
+  "type": "module",
+  "bin": {
+    "xnd": "./index.mjs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "package-manager",
+    "xnd",
+    "cli",
+    "security"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/xnd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/xnd/issues"
+  },
+  "homepage": "https://github.com/your-username/xnd#readme"
+  ,
+  "dependencies": {
+    "axios": "^1.7.2",
+    "commander": "^12.1.0",
+    "inquirer": "^9.2.23"
+  }
+}
