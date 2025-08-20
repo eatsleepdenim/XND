@@ -1,124 +1,74 @@
-# XND - A Secure and Extensible Package Manager
+# signal-exit
 
-## Introduction
-XND is a command-line interface (CLI) tool designed to be a simple, secure, and extensible package manager. It aims to provide a robust platform for managing XND packages with a focus on security through a user tier system.
+When you want to fire an event no matter how a process exits:
 
-## Features
-- **Project Initialization:** Quickly set up new projects with `xnd init`.
-- **Package Installation:** Install packages from the XND registry with `xnd install`.
-- **Dependency Management:** Automatically save installed packages to your `package.json`.
-- **Package Creation:** Scaffold new XND packages with `xnd create`.
-- **User Tier System:** A multi-level user system to control publishing and moderation, preventing malicious uploads.
-  - **User:** Can install packages.
-  - **Package-Maker:** Can publish their own packages.
-  - **Moderator:** Can manage packages and users.
-  - **Creator:** Full control over the system.
-- **Secure Publishing:** Publishing is restricted based on user tiers.
+- reaching the end of execution.
+- explicitly having `process.exit(code)` called.
+- having `process.kill(pid, sig)` called.
+- receiving a fatal signal from outside the process
 
-## Installation
+Use `signal-exit`.
 
-To install XND globally, run the following command:
+```js
+// Hybrid module, either works
+import { onExit } from 'signal-exit'
+// or:
+// const { onExit } = require('signal-exit')
 
-```bash
-npm install -g xnd
+onExit((code, signal) => {
+  console.log('process exited!', code, signal)
+})
 ```
 
-## Usage
+## API
 
-### `xnd init`
-Initializes a new project and creates a `package.json` file.
+`remove = onExit((code, signal) => {}, options)`
 
-```bash
-xnd init
-```
+The return value of the function is a function that will remove
+the handler.
 
-### `xnd install [packages...]`
-Installs one or more packages from the XND registry. If no packages are specified, it installs all dependencies from `package.json`.
+Note that the function _only_ fires for signals if the signal
+would cause the process to exit. That is, there are no other
+listeners, and it is a fatal signal.
 
-```bash
-xnd install react
-xnd install lodash express
-xnd install # Installs from package.json
-```
+If the global `process` object is not suitable for this purpose
+(ie, it's unset, or doesn't have an `emit` method, etc.) then the
+`onExit` function is a no-op that returns a no-op `remove` method.
 
-Use the `--save` or `-S` flag to save the installed package as a dependency in your `package.json`:
+### Options
 
-```bash
-xnd install moment --save
-```
+- `alwaysLast`: Run this handler after any other signal or exit
+  handlers. This causes `process.emit` to be monkeypatched.
 
-### `xnd create <package-name>`
-Creates a new XND package with a basic structure, including a `package.json`, `index.js` with an example function, and a `README.md`.
+### Capturing Signal Exits
 
-```bash
-xnd create my-awesome-package
-```
+If the handler returns an exact boolean `true`, and the exit is a
+due to signal, then the signal will be considered handled, and
+will _not_ trigger a synthetic `process.kill(process.pid,
+signal)` after firing the `onExit` handlers.
 
-### `xnd login`
-Logs in a user to the XND system. You will be prompted for your username and password.
+In this case, it your responsibility as the caller to exit with a
+signal (for example, by calling `process.kill()`) if you wish to
+preserve the same exit status that would otherwise have occurred.
+If you do not, then the process will likely exit gracefully with
+status 0 at some point, assuming that no other terminating signal
+or other exit trigger occurs.
 
-```bash
-xnd login
-```
+Prior to calling handlers, the `onExit` machinery is unloaded, so
+any subsequent exits or signals will not be handled, even if the
+signal is captured and the exit is thus prevented.
 
-### `xnd logout`
-Logs out the current user.
+Note that numeric code exits may indicate that the process is
+already committed to exiting, for example due to a fatal
+exception or unhandled promise rejection, and so there is no way to
+prevent it safely.
 
-```bash
-xnd logout
-```
+### Browser Fallback
 
-### `xnd whoami`
-Shows the username of the currently logged-in user.
+The `'signal-exit/browser'` module is the same fallback shim that
+just doesn't do anything, but presents the same function
+interface.
 
-```bash
-xnd whoami
-```
-
-### `xnd publish`
-Publishes the package in the current directory to the XND registry. Requires appropriate user tier permissions.
-
-```bash
-xnd publish
-```
-
-### `xnd set-tier <username> <tier>`
-Sets the tier for a specified user. This command is restricted to the `creator` tier.
-
-Valid tiers are: `user`, `package-maker`, `moderator`, `creator`.
-
-```bash
-xnd set-tier john_doe package-maker
-```
-
-## User Tier System
-
-XND implements a user tier system to ensure the integrity and security of the package registry. Each tier has specific permissions:
-
-- **User:** The default tier for all new users. Can install packages.
-- **Package-Maker:** Can publish and manage their own packages.
-- **Moderator:** Can manage packages and users (e.g., remove malicious packages, suspend users).
-- **Creator:** Has full administrative control over the system, including setting user tiers and managing all aspects of the registry.
-
-## Development
-
-### Running the XND Server
-
-To run the XND server (which handles user authentication and package publishing logic), navigate to the `xnd-server` directory and run:
-
-```bash
-node index.js
-```
-
-### Running the XND CLI Locally
-
-To test changes to the XND CLI locally without global installation, navigate to the `xnd` directory and use `node index.mjs` followed by the command:
-
-```bash
-node index.mjs init
-node index.mjs install react
-```
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Patches welcome to add something that hooks onto
+`window.onbeforeunload` or similar, but it might just not be a
+thing that makes sense there.
