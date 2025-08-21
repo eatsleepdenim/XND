@@ -1,121 +1,178 @@
-# chardet
+# `@inquirer/select`
 
-_Chardet_ is a character detection module written in pure JavaScript (TypeScript). Module uses occurrence analysis to determine the most probable encoding.
+Simple interactive command line prompt to display a list of choices (single select.)
 
-- Packed size is only **22 KB**
-- Works in all environments: Node / Browser / Native
-- Works on all platforms: Linux / Mac / Windows
-- No dependencies
-- No native code / bindings
-- 100% written in TypeScript
-- Extensive code coverage
+![select prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/list.svg)
 
-## Installation
+# Special Thanks
 
-```
-npm i chardet
-```
+<div align="center" markdown="1">
 
-## Usage
+[![Graphite](https://github.com/user-attachments/assets/53db40ca-2254-481a-a094-6597f8716e29)](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)<br>
 
-To return the encoding with the highest confidence:
+### [Graphite is the AI developer productivity platform helping teams on GitHub ship higher quality software, faster](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)
 
-```javascript
-import chardet from 'chardet';
+</div>
 
-const encoding = chardet.detect(Buffer.from('hello there!'));
-// or
-const encoding = await chardet.detectFile('/path/to/file');
-// or
-const encoding = chardet.detectFileSync('/path/to/file');
+# Installation
+
+<table>
+<tr>
+  <th>npm</th>
+  <th>yarn</th>
+</tr>
+<tr>
+<td>
+
+```sh
+npm install @inquirer/prompts
 ```
 
-To return the full list of possible encodings use `analyse` method.
+</td>
+<td>
 
-```javascript
-import chardet from 'chardet';
-chardet.analyse(Buffer.from('hello there!'));
+```sh
+yarn add @inquirer/prompts
 ```
 
-Returned value is an array of objects sorted by confidence value in descending order
+</td>
+</tr>
+<tr>
+<td colSpan="2" align="center">Or</td>
+</tr>
+<tr>
+<td>
 
-```javascript
-[
-  { confidence: 90, name: 'UTF-8' },
-  { confidence: 20, name: 'windows-1252', lang: 'fr' },
-];
+```sh
+npm install @inquirer/select
 ```
 
-In browser, you can use [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instead of the `Buffer`:
+</td>
+<td>
 
-```javascript
-import chardet from 'chardet';
-chardet.analyse(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]));
+```sh
+yarn add @inquirer/select
 ```
 
-## Working with large data sets
+</td>
+</tr>
+</table>
 
-Sometimes, when data set is huge and you want to optimize performance (with a trade off of less accuracy),
-you can sample only the first N bytes of the buffer:
+# Usage
 
-```javascript
-const encoding = await chardet.detectFile('/path/to/file', { sampleSize: 32 });
-```
+```js
+import { select, Separator } from '@inquirer/prompts';
+// Or
+// import select, { Separator } from '@inquirer/select';
 
-You can also specify where to begin reading from in the buffer:
-
-```javascript
-const encoding = await chardet.detectFile('/path/to/file', {
-  sampleSize: 32,
-  offset: 128,
+const answer = await select({
+  message: 'Select a package manager',
+  choices: [
+    {
+      name: 'npm',
+      value: 'npm',
+      description: 'npm is the most popular package manager',
+    },
+    {
+      name: 'yarn',
+      value: 'yarn',
+      description: 'yarn is an awesome package manager',
+    },
+    new Separator(),
+    {
+      name: 'jspm',
+      value: 'jspm',
+      disabled: true,
+    },
+    {
+      name: 'pnpm',
+      value: 'pnpm',
+      disabled: '(pnpm is not available)',
+    },
+  ],
 });
 ```
 
-## Working with strings
+## Options
 
-In both Node.js and browsers, all strings in memory are represented in UTF-16 encoding. This is a fundamental aspect of the JavaScript language specification. Therefore, you cannot use plain strings directly as input for `chardet.analyse()` or `chardet.detect()`. Instead, you need the original string data in the form of a Buffer or Uint8Array.
+| Property     | Type                                     | Required | Description                                                                                                                                 |
+| ------------ | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| message      | `string`                                 | yes      | The question to ask                                                                                                                         |
+| choices      | `Choice[]`                               | yes      | List of the available choices.                                                                                                              |
+| default      | `string`                                 | no       | Defines in front of which item the cursor will initially appear. When omitted, the cursor will appear on the first selectable item.         |
+| pageSize     | `number`                                 | no       | By default, lists of choice longer than 7 will be paginated. Use this option to control how many choices will appear on the screen at once. |
+| loop         | `boolean`                                | no       | Defaults to `true`. When set to `false`, the cursor will be constrained to the top and bottom of the choice list without looping.           |
+| instructions | `{ navigation: string; pager: string; }` | no       | Defines the help tip content.                                                                                                               |
+| theme        | [See Theming](#Theming)                  | no       | Customize look of the prompt.                                                                                                               |
 
-In other words, if you receive a piece of data over the network and want to detect its encoding, use the original data payload, not its string representation. By the time you convert data to a string, it will be in UTF-16 encoding.
+`Separator` objects can be used in the `choices` array to render non-selectable lines in the choice list. By default it'll render a line, but you can provide the text as argument (`new Separator('-- Dependencies --')`). This option is often used to add labels to groups within long list of options.
 
-Note on [TextEncoder](https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/TextEncoder): By default, it returns a UTF-8 encoded buffer, which means the buffer will not be in the original encoding of the string.
+### `Choice` object
 
-## Supported Encodings:
+The `Choice` object is typed as
 
-- UTF-8
-- UTF-16 LE
-- UTF-16 BE
-- UTF-32 LE
-- UTF-32 BE
-- ISO-2022-JP
-- ISO-2022-KR
-- ISO-2022-CN
-- Shift_JIS
-- Big5
-- EUC-JP
-- EUC-KR
-- GB18030
-- ISO-8859-1
-- ISO-8859-2
-- ISO-8859-5
-- ISO-8859-6
-- ISO-8859-7
-- ISO-8859-8
-- ISO-8859-9
-- windows-1250
-- windows-1251
-- windows-1252
-- windows-1253
-- windows-1254
-- windows-1255
-- windows-1256
-- KOI8-R
+```ts
+type Choice<Value> = {
+  value: Value;
+  name?: string;
+  description?: string;
+  short?: string;
+  disabled?: boolean | string;
+};
+```
 
-Currently only these encodings are supported.
+Here's each property:
 
-## TypeScript?
+- `value`: The value is what will be returned by `await select()`.
+- `name`: This is the string displayed in the choice list.
+- `description`: Option for a longer description string that'll appear under the list when the cursor highlight a given choice.
+- `short`: Once the prompt is done (press enter), we'll use `short` if defined to render next to the question. By default we'll use `name`.
+- `disabled`: Disallow the option from being selected. If `disabled` is a string, it'll be used as a help tip explaining why the choice isn't available.
 
-Yes. Type definitions are included.
+`choices` can also be an array of string, in which case the string will be used both as the `value` and the `name`.
 
-### References
+## Theming
 
-- ICU project http://site.icu-project.org/
+You can theme a prompt by passing a `theme` object option. The theme object only need to includes the keys you wish to modify, we'll fallback on the defaults for the rest.
+
+```ts
+type Theme = {
+  prefix: string | { idle: string; done: string };
+  spinner: {
+    interval: number;
+    frames: string[];
+  };
+  style: {
+    answer: (text: string) => string;
+    message: (text: string, status: 'idle' | 'done' | 'loading') => string;
+    error: (text: string) => string;
+    help: (text: string) => string;
+    highlight: (text: string) => string;
+    description: (text: string) => string;
+    disabled: (text: string) => string;
+  };
+  icon: {
+    cursor: string;
+  };
+  helpMode: 'always' | 'never' | 'auto';
+  indexMode: 'hidden' | 'number';
+};
+```
+
+### `theme.helpMode`
+
+- `auto` (default): Hide the help tips after an interaction occurs.
+- `always`: The help tips will always show and never hide.
+- `never`: The help tips will never show.
+
+### `theme.indexMode`
+
+Controls how indices are displayed before each choice:
+
+- `hidden` (default): No indices are shown
+- `number`: Display a number before each choice (e.g. "1. Option A")
+
+# License
+
+Copyright (c) 2023 Simon Boudrias (twitter: [@vaxilart](https://twitter.com/Vaxilart))<br/>
+Licensed under the MIT license.
