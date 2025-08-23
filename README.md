@@ -1,178 +1,124 @@
-# `@inquirer/select`
+# XND - A Secure and Extensible Package Manager
 
-Simple interactive command line prompt to display a list of choices (single select.)
+## Introduction
+XND is a command-line interface (CLI) tool designed to be a simple, secure, and extensible package manager. It aims to provide a robust platform for managing XND packages with a focus on security through a user tier system.
 
-![select prompt](https://cdn.rawgit.com/SBoudrias/Inquirer.js/28ae8337ba51d93e359ef4f7ee24e79b69898962/assets/screenshots/list.svg)
+## Features
+- **Project Initialization:** Quickly set up new projects with `xnd init`.
+- **Package Installation:** Install packages from the XND registry with `xnd install`.
+- **Dependency Management:** Automatically save installed packages to your `package.json`.
+- **Package Creation:** Scaffold new XND packages with `xnd create`.
+- **User Tier System:** A multi-level user system to control publishing and moderation, preventing malicious uploads.
+  - **User:** Can install packages.
+  - **Package-Maker:** Can publish their own packages.
+  - **Moderator:** Can manage packages and users.
+  - **Creator:** Full control over the system.
+- **Secure Publishing:** Publishing is restricted based on user tiers.
 
-# Special Thanks
+## Installation
 
-<div align="center" markdown="1">
+To install XND globally, run the following command:
 
-[![Graphite](https://github.com/user-attachments/assets/53db40ca-2254-481a-a094-6597f8716e29)](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)<br>
-
-### [Graphite is the AI developer productivity platform helping teams on GitHub ship higher quality software, faster](https://graphite.dev/?utm_source=npmjs&utm_medium=repo&utm_campaign=inquirerjs)
-
-</div>
-
-# Installation
-
-<table>
-<tr>
-  <th>npm</th>
-  <th>yarn</th>
-</tr>
-<tr>
-<td>
-
-```sh
-npm install @inquirer/prompts
+```bash
+npm install -g xnd
 ```
 
-</td>
-<td>
+## Usage
 
-```sh
-yarn add @inquirer/prompts
+### `xnd init`
+Initializes a new project and creates a `package.json` file.
+
+```bash
+xnd init
 ```
 
-</td>
-</tr>
-<tr>
-<td colSpan="2" align="center">Or</td>
-</tr>
-<tr>
-<td>
+### `xnd install [packages...]`
+Installs one or more packages from the XND registry. If no packages are specified, it installs all dependencies from `package.json`.
 
-```sh
-npm install @inquirer/select
+```bash
+xnd install react
+xnd install lodash express
+xnd install # Installs from package.json
 ```
 
-</td>
-<td>
+Use the `--save` or `-S` flag to save the installed package as a dependency in your `package.json`:
 
-```sh
-yarn add @inquirer/select
+```bash
+xnd install moment --save
 ```
 
-</td>
-</tr>
-</table>
+### `xnd create <package-name>`
+Creates a new XND package with a basic structure, including a `package.json`, `index.js` with an example function, and a `README.md`.
 
-# Usage
-
-```js
-import { select, Separator } from '@inquirer/prompts';
-// Or
-// import select, { Separator } from '@inquirer/select';
-
-const answer = await select({
-  message: 'Select a package manager',
-  choices: [
-    {
-      name: 'npm',
-      value: 'npm',
-      description: 'npm is the most popular package manager',
-    },
-    {
-      name: 'yarn',
-      value: 'yarn',
-      description: 'yarn is an awesome package manager',
-    },
-    new Separator(),
-    {
-      name: 'jspm',
-      value: 'jspm',
-      disabled: true,
-    },
-    {
-      name: 'pnpm',
-      value: 'pnpm',
-      disabled: '(pnpm is not available)',
-    },
-  ],
-});
+```bash
+xnd create my-awesome-package
 ```
 
-## Options
+### `xnd login`
+Logs in a user to the XND system. You will be prompted for your username and password.
 
-| Property     | Type                                     | Required | Description                                                                                                                                 |
-| ------------ | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| message      | `string`                                 | yes      | The question to ask                                                                                                                         |
-| choices      | `Choice[]`                               | yes      | List of the available choices.                                                                                                              |
-| default      | `string`                                 | no       | Defines in front of which item the cursor will initially appear. When omitted, the cursor will appear on the first selectable item.         |
-| pageSize     | `number`                                 | no       | By default, lists of choice longer than 7 will be paginated. Use this option to control how many choices will appear on the screen at once. |
-| loop         | `boolean`                                | no       | Defaults to `true`. When set to `false`, the cursor will be constrained to the top and bottom of the choice list without looping.           |
-| instructions | `{ navigation: string; pager: string; }` | no       | Defines the help tip content.                                                                                                               |
-| theme        | [See Theming](#Theming)                  | no       | Customize look of the prompt.                                                                                                               |
-
-`Separator` objects can be used in the `choices` array to render non-selectable lines in the choice list. By default it'll render a line, but you can provide the text as argument (`new Separator('-- Dependencies --')`). This option is often used to add labels to groups within long list of options.
-
-### `Choice` object
-
-The `Choice` object is typed as
-
-```ts
-type Choice<Value> = {
-  value: Value;
-  name?: string;
-  description?: string;
-  short?: string;
-  disabled?: boolean | string;
-};
+```bash
+xnd login
 ```
 
-Here's each property:
+### `xnd logout`
+Logs out the current user.
 
-- `value`: The value is what will be returned by `await select()`.
-- `name`: This is the string displayed in the choice list.
-- `description`: Option for a longer description string that'll appear under the list when the cursor highlight a given choice.
-- `short`: Once the prompt is done (press enter), we'll use `short` if defined to render next to the question. By default we'll use `name`.
-- `disabled`: Disallow the option from being selected. If `disabled` is a string, it'll be used as a help tip explaining why the choice isn't available.
-
-`choices` can also be an array of string, in which case the string will be used both as the `value` and the `name`.
-
-## Theming
-
-You can theme a prompt by passing a `theme` object option. The theme object only need to includes the keys you wish to modify, we'll fallback on the defaults for the rest.
-
-```ts
-type Theme = {
-  prefix: string | { idle: string; done: string };
-  spinner: {
-    interval: number;
-    frames: string[];
-  };
-  style: {
-    answer: (text: string) => string;
-    message: (text: string, status: 'idle' | 'done' | 'loading') => string;
-    error: (text: string) => string;
-    help: (text: string) => string;
-    highlight: (text: string) => string;
-    description: (text: string) => string;
-    disabled: (text: string) => string;
-  };
-  icon: {
-    cursor: string;
-  };
-  helpMode: 'always' | 'never' | 'auto';
-  indexMode: 'hidden' | 'number';
-};
+```bash
+xnd logout
 ```
 
-### `theme.helpMode`
+### `xnd whoami`
+Shows the username of the currently logged-in user.
 
-- `auto` (default): Hide the help tips after an interaction occurs.
-- `always`: The help tips will always show and never hide.
-- `never`: The help tips will never show.
+```bash
+xnd whoami
+```
 
-### `theme.indexMode`
+### `xnd publish`
+Publishes the package in the current directory to the XND registry. Requires appropriate user tier permissions.
 
-Controls how indices are displayed before each choice:
+```bash
+xnd publish
+```
 
-- `hidden` (default): No indices are shown
-- `number`: Display a number before each choice (e.g. "1. Option A")
+### `xnd set-tier <username> <tier>`
+Sets the tier for a specified user. This command is restricted to the `creator` tier.
 
-# License
+Valid tiers are: `user`, `package-maker`, `moderator`, `creator`.
 
-Copyright (c) 2023 Simon Boudrias (twitter: [@vaxilart](https://twitter.com/Vaxilart))<br/>
-Licensed under the MIT license.
+```bash
+xnd set-tier john_doe package-maker
+```
+
+## User Tier System
+
+XND implements a user tier system to ensure the integrity and security of the package registry. Each tier has specific permissions:
+
+- **User:** The default tier for all new users. Can install packages.
+- **Package-Maker:** Can publish and manage their own packages.
+- **Moderator:** Can manage packages and users (e.g., remove malicious packages, suspend users).
+- **Creator:** Has full administrative control over the system, including setting user tiers and managing all aspects of the registry.
+
+## Development
+
+### Running the XND Server
+
+To run the XND server (which handles user authentication and package publishing logic), navigate to the `xnd-server` directory and run:
+
+```bash
+node index.js
+```
+
+### Running the XND CLI Locally
+
+To test changes to the XND CLI locally without global installation, navigate to the `xnd` directory and use `node index.mjs` followed by the command:
+
+```bash
+node index.mjs init
+node index.mjs install react
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
